@@ -3,6 +3,7 @@ from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse
 from django.template.loader import render_to_string
 from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
 from io import BytesIO
 from .models import Room, Booking
 from django.http import HttpResponse
@@ -83,6 +84,8 @@ def room_list(request):
 
 
 
+
+
 def booking_list(request):
     # Check if a date range is provided in the request
     start_date_str = request.GET.get('start_date', '')
@@ -125,6 +128,9 @@ def booking_list(request):
 
         bookings_with_details.append(booking_details)
     
+    
+    
+   
     return render(request, 'booking_list.html', {
         'bookings': bookings_with_details,
         'start_date': start_date,
@@ -159,27 +165,63 @@ def booking_detail(request, booking_id):
 
 
 
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.lib.units import inch
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.styles import ParagraphStyle
+from io import BytesIO
+from reportlab.pdfgen import canvas
+from decimal import Decimal
+
 def generate_pdf_bill(booking):
     buffer = BytesIO()
-    p = canvas.Canvas(buffer)
+
+    p = canvas.Canvas(buffer, pagesize=letter)
+
+    # Add SV Mahal and contact details
+    p.setFont("Helvetica-Bold", 12)
+    p.drawString(50, 750, "SV Mahal")
+    p.drawString(50, 735, "123 Street, City, Country")
+    p.drawString(50, 720, "Phone: +1234567890")
+    p.drawString(70, 650, "Booking Bill")
+    # Add a line under the SV Mahal details
+    p.line(50, 710, 550, 710)
+    p.line(70, 645, 300, 645)
+
+
+    
+    
 
     # Add content to the PDF
-    p.drawString(100, 800, f"Booking ID: {booking.id}")
-    p.drawString(100, 780, f"Start Date: {booking.start_date.strftime('%Y-%m-%d %H:%M:%S')}")
-    p.drawString(100, 760, f"End Date: {booking.end_date.strftime('%Y-%m-%d %H:%M:%S')}")
-    p.drawString(100, 740, f"Price: {booking.price}")
+    p.drawString(80, 620, f"Booking ID: {booking.id}")
+    p.drawString(80, 600, f"Start Date: {booking.start_date.strftime('%Y-%m-%d')}")
+    p.drawString(80, 580, f"End Date: {booking.end_date.strftime('%Y-%m-%d')}")
+    p.drawString(80, 560, f"Price: {booking.price}")
 
     # Calculate GST dynamically
     price = Decimal(booking.price)  # Convert to Decimal
     gst = price * Decimal('0.18')  # Assuming GST is 18%
-    total_price = price + gst 
-    p.drawString(100, 720, f"GST (18%): {gst} - total :{total_price}" )
+    total_price = price + gst
+    p.drawString(80, 540, f"GST (18%): {gst} - Total: {total_price}")
 
     # Add room details
-    y_position = 700
-    for room in booking.rooms.all():
-        p.drawString(100, y_position, f"Room: {room.name} - {room.description}")
-        y_position -= 20
+    y_position = 520
+    room_details = ', '.join([room.name for room in booking.rooms.all()])
+
+    p.drawString(80, y_position, "Room Details:")
+    p.setFont("Courier", 10)
+    text_object = p.beginText(80, y_position - 20)
+    text_object.textLines(room_details)
+    p.drawText(text_object)
+
+    # Add a border around the content
+    p.rect(50, y_position - 40, 540, 200)
+
+    # Add Murugan photo
+    murugan_photo_path = "murugan.jpg"  # Path to your Murugan photo
+    p.drawImage(murugan_photo_path, 350, 500, width=150, height=150)
 
     # Close the PDF object cleanly, and we're done.
     p.showPage()
@@ -188,6 +230,9 @@ def generate_pdf_bill(booking):
     # File is done, rewind the buffer.
     buffer.seek(0)
     return buffer
+
+
+
 
 def download_pdf(request, booking_id):
     booking = get_object_or_404(Booking, pk=booking_id)
