@@ -1,4 +1,24 @@
-<!-- room_list.html -->
-{% for room in rooms %}
-  <p>{{ room.name }} - {{ room.description }}</p>
-{% endfor %}
+
+  <h2>Room List</h2>
+  
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        
+        <th>Available</th>
+        <th>Unavailable</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for room in rooms %}
+        <tr>
+          <td>{{ room.name }}</td>
+          
+          <td>{% if room.available %}Yes{% else %}No{% endif %}</td>
+          <td>{% if room.unavailable %}Yes{% else %}No{% endif %}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+

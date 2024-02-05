@@ -4,6 +4,9 @@ from django.db import models
 class Room(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField()
+    available = models.BooleanField(default=True)  
+    unavailable = models.BooleanField(default=False)  
+
 
 class Booking(models.Model):
     rooms = models.ManyToManyField(Room)

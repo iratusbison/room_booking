@@ -13,18 +13,14 @@ from django.utils.timezone import make_aware
 from decimal import Decimal
 from django.db.models import Sum
 from datetime import datetime, timedelta
+from django.db import transaction
 
 
 def make_aware_with_time(value):
     # Assuming that time is 00:00:00 for start_date and 23:59:59 for end_date
     return make_aware(datetime.combine(value, datetime.min.time()))
 
-
-def room_list(request):
-    rooms = Room.objects.all()
-    return render(request, 'room_list.html', {'rooms': rooms})
-
-
+@transaction.atomic
 def booking_create(request):
     if request.method == 'POST':
         room_ids = request.POST.getlist('rooms')
@@ -33,6 +29,12 @@ def booking_create(request):
         price = request.POST['price']
 
         rooms = Room.objects.filter(pk__in=room_ids)
+        
+        # Check room availability and update status
+        if not update_room_availability(rooms, start_date, end_date):
+            # Rollback the transaction if rooms are not available
+            return HttpResponse("Selected rooms are not available for the specified dates.")
+
         booking = Booking.objects.create(start_date=start_date, end_date=end_date, price=price)
         booking.rooms.set(rooms)
 
@@ -47,6 +49,37 @@ def booking_create(request):
     else:
         rooms = Room.objects.all()
         return render(request, 'booking_create.html', {'rooms': rooms})
+
+
+def update_room_availability(rooms, start_date, end_date):
+    try:
+        with transaction.atomic():
+            # Check if rooms are available for the specified dates
+            for room in rooms:
+                bookings_for_room = Booking.objects.filter(
+                    rooms=room,
+                    start_date__lte=end_date,
+                    end_date__gte=start_date
+                )
+                if bookings_for_room.exists():
+                    # Room is not available for the specified dates
+                    return False
+
+            # If all rooms are available, update their availability status
+            for room in rooms:
+                room.available = False
+                room.unavailable = True
+                room.save()
+
+            return True
+    except:
+        return False
+
+
+
+def room_list(request):
+    rooms = Room.objects.all()
+    return render(request, 'room_list.html', {'rooms': rooms})
 
 
 
