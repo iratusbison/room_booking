@@ -14,49 +14,25 @@ from django.utils.timezone import make_aware
 from decimal import Decimal
 from django.db.models import Sum
 from datetime import datetime, timedelta
+from django.utils import timezone
 from django.db import transaction
-
+from reportlab.lib.pagesizes import letter
+from io import BytesIO
+from reportlab.pdfgen import canvas
+from decimal import Decimal
 
 def make_aware_with_time(value):
-    # Assuming that time is 00:00:00 for start_date and 23:59:59 for end_date
+    
     return make_aware(datetime.combine(value, datetime.min.time()))
 
-@transaction.atomic
-def booking_create(request):
-    if request.method == 'POST':
-        room_ids = request.POST.getlist('rooms')
-        start_date = request.POST['start_date']
-        end_date = request.POST['end_date']
-        price = request.POST['price']
 
-        rooms = Room.objects.filter(pk__in=room_ids)
-        
-        # Check room availability and update status
-        if not update_room_availability(rooms, start_date, end_date):
-            # Rollback the transaction if rooms are not available
-            return HttpResponse("Selected rooms are not available for the specified dates.")
-
-        booking = Booking.objects.create(start_date=start_date, end_date=end_date, price=price)
-        booking.rooms.set(rooms)
-
-        # Calculate GST (18%)
-        gst = float(price) * 0.18
-        booking.gst = gst
-        booking.save()
-
-        # Redirect to the booking details page after creating the booking
-        return redirect('booking_detail', booking_id=booking.id)
-
-    else:
-        rooms = Room.objects.all()
-        return render(request, 'booking_create.html', {'rooms': rooms})
 
 
 def update_room_availability(rooms, start_date, end_date):
     try:
         with transaction.atomic():
-            # Check if rooms are available for the specified dates
             for room in rooms:
+                # Check if there are any bookings that overlap with the specified date range
                 bookings_for_room = Booking.objects.filter(
                     rooms=room,
                     start_date__lte=end_date,
@@ -66,18 +42,121 @@ def update_room_availability(rooms, start_date, end_date):
                     # Room is not available for the specified dates
                     return False
 
-            # If all rooms are available, update their availability status
-            for room in rooms:
-                room.available = False
-                room.unavailable = True
-                room.save()
-
             return True
     except:
         return False
 
+@transaction.atomic
+def booking_create(request):
+    if request.method == 'POST':
+        room_ids = request.POST.getlist('rooms')
+        name = request.POST['name']
+        address = request.POST['address']
+        phone = request.POST['phone']
+        aadhar = request.POST['aadhar']
+        email = request.POST['email']
+        start_date = request.POST['start_date']
+        end_date = request.POST['end_date']
+        price = request.POST['price']
 
+        rooms = Room.objects.filter(pk__in=room_ids)
 
+        # Check room availability and update status
+        if not update_room_availability(rooms, start_date, end_date):
+            # Rollback the transaction if rooms are not available
+            return HttpResponse("Selected rooms are not available for the specified dates.")
+
+        booking = Booking.objects.create(
+            start_date=start_date, 
+            end_date=end_date, 
+            price=price, 
+            name=name, 
+            address=address, 
+            aadhar=aadhar, 
+            email=email, 
+            phone=phone
+        )
+        booking.rooms.set(rooms)
+
+        # Mark rooms as unavailable only if the start date is in the future
+        if datetime.strptime(start_date, '%Y-%m-%d').date() > datetime.now().date():
+            for room in rooms:
+                room.available = False
+                room.save()
+
+        # Calculate GST (18%)
+        gst = Decimal(price) * Decimal('0.18')
+        booking.gst = gst
+        booking.save()
+
+        # Redirect to the booking details page after creating the booking
+        return redirect('booking_detail', booking_id=booking.id)
+
+    else:
+        rooms = Room.objects.filter(available=True)
+        return render(request, 'booking_create.html', {'rooms': rooms})
+'''
+from django.core.exceptions import ValidationError
+
+@transaction.atomic
+def booking_create(request):
+    if request.method == 'POST':
+        room_ids = request.POST.getlist('rooms')
+        name = request.POST['name']
+        address = request.POST['address']
+        phone = request.POST['phone']
+        aadhar = request.POST['aadhar']
+        email = request.POST['email']
+        start_date_str = request.POST['start_date']
+        end_date_str = request.POST['end_date']
+        price = request.POST['price']
+
+        rooms = Room.objects.filter(pk__in=room_ids)
+
+        # Convert start_date and end_date strings to datetime.date objects
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+
+       
+
+        # Check if end_date is before start_date
+        if end_date < start_date:
+            return HttpResponse("End date cannot be before the start date.")
+
+        # Check room availability and update status for the entire range
+        if not update_room_availability(rooms, start_date, end_date):
+            # Rollback the transaction if rooms are not available
+            return HttpResponse("Selected rooms are not available for the specified dates.")
+
+        booking = Booking.objects.create(
+            start_date=start_date, 
+            end_date=end_date, 
+            price=price, 
+            name=name, 
+            address=address, 
+            aadhar=aadhar, 
+            email=email, 
+            phone=phone
+        )
+        booking.rooms.set(rooms)
+
+        # Mark rooms as unavailable for the entire range
+        for room in rooms:
+            room.available = False
+            room.save()
+
+        # Calculate GST (18%)
+        gst = Decimal(price) * Decimal('0.18')
+        booking.gst = gst
+        booking.save()
+
+        # Redirect to the booking details page after creating the booking
+        return redirect('booking_detail', booking_id=booking.id)
+
+    else:
+        rooms = Room.objects.filter(available=True)
+        return render(request, 'booking_create.html', {'rooms': rooms})
+'''
 def room_list(request):
     rooms = Room.objects.all()
     return render(request, 'room_list.html', {'rooms': rooms})
@@ -91,10 +170,16 @@ def booking_list(request):
     start_date_str = request.GET.get('start_date', '')
     end_date_str = request.GET.get('end_date', '')
 
+    if end_date < start_date:
+        return HttpResponse("End date cannot be before the start date.")
+
+
     # Default to the last 30 days if no date range is provided
     if not start_date_str or not end_date_str:
         end_date = datetime.now()
         start_date = end_date - timedelta(days=30)
+    # Check if end_date is before start_date
+    
     else:
         start_date = make_aware(datetime.strptime(start_date_str, '%Y-%m-%d'))
         end_date = make_aware(datetime.strptime(end_date_str, '%Y-%m-%d'))
@@ -144,8 +229,8 @@ def booking_detail(request, booking_id):
     booking = get_object_or_404(Booking, pk=booking_id)
 
     # Calculate GST for the booking
-    price = float(booking.price)
-    gst = price * 0.18
+    price = booking.price
+    gst = price * Decimal('0.18')
     total_price = price + gst
 
     # Collect room details for the booking
@@ -155,25 +240,45 @@ def booking_detail(request, booking_id):
         'booking': booking,
         'start_date': booking.start_date.strftime('%Y-%m-%d %H:%M:%S'),
         'end_date': booking.end_date.strftime('%Y-%m-%d %H:%M:%S'),
+        'name': booking.name,
+        'address': booking.address,
+        'aadhar': booking.aadhar,
+        'phone': booking.phone,
         'price': price,
         'gst': gst,
-        'total_price' : total_price,
+        'email' : booking.email,
+        'total_price': total_price,
         'rooms': room_details,
     }
 
     return render(request, 'booking_details.html', context)
 
 
+def edit_booking(request, booking_id):
+    booking = Booking.objects.get(id=booking_id)
+    if request.method == 'POST':
+        booking.checkin_datetime = request.POST.get('checkin_datetime')
+        booking.checkout_datetime = request.POST.get('checkout_datetime')
+        booking.name = request.POST.get('name')
+        booking.address = request.POST.get('address')
+        booking.phone = request.POST.get('phone')
+        booking.aadhar = request.POST.get('aadhar')
+        booking.price = request.POST.get('price')
 
-from reportlab.lib.pagesizes import letter
-from reportlab.lib import colors
-from reportlab.lib.units import inch
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-from reportlab.lib.styles import ParagraphStyle
-from io import BytesIO
-from reportlab.pdfgen import canvas
-from decimal import Decimal
+        booking.save()
+        return redirect('room_list')
+    else:
+        return render(request, 'edit_booking.html', {'booking': booking})
+
+@transaction.atomic
+def delete_booking(request, booking_id):
+    booking = Booking.objects.get(id=booking_id)
+    rooms = booking.rooms.all()  # Retrieve all rooms associated with the booking
+    for room in rooms:
+        room.available = True  # Update each room's availability
+        room.save()
+    booking.delete()  # Delete the booking
+    return redirect('booking_list')
 
 def generate_pdf_bill(booking):
     buffer = BytesIO()

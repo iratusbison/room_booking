@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Booking</title>
+</head>
+<body>
+    <h1>Edit Booking</h1>
+    <form action="{% url 'edit_booking' booking.id %}" method="post">
+        {% csrf_token %}
+        <label for="name">Name:</label><br>
+        <input type="text" id="name" name="name" value="{{ booking.name }}" required><br>
+        
+        <label for="address">Address:</label><br>
+        <input type="text" id="address" name="address" value="{{ booking.address }}" required><br>
+        
+        <label for="phone">Phone:</label><br>
+        <input type="text" id="phone" name="phone" value="{{ booking.phone }}" required><br>
+        
+        <label for="aadhar">Aadhar:</label><br>
+        <input type="text" id="aadhar" name="aadhar" value="{{ booking.aadhar }}" required><br>
+        
+        <label for="email">Email:</label><br>
+        <input type="email" id="email" name="email" value="{{ booking.email }}" required><br>
+        
+        <label for="start_date">Start Date:</label><br>
+        <input type="date" id="start_date" name="start_date" value="{{ booking.start_date }}" required><br>
+        
+        <label for="end_date">End Date:</label><br>
+        <input type="date" id="end_date" name="end_date" value="{{ booking.end_date }}" required><br>
+        
+        <label for="price">Price:</label><br>
+        <input type="text" id="price" name="price" value="{{ booking.price }}" required><br>
+        
+        <!-- Add other fields as needed -->
+
+        <button type="submit">Save Changes</button>
+    </form>
+</body>
+</html>

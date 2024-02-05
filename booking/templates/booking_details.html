@@ -17,5 +17,7 @@
 
     <!-- Download PDF Link -->
     <a href="{% url 'download_pdf' booking.id %}" target="_blank">Download PDF Bill</a>
+    <a href="{% url 'edit_booking' booking.id %}" class="action-btn"><i class="icon edit-icon fas fa-edit"></i>Edit</a>
+    <a href="{% url 'delete_booking' booking.id %}" class="action-btn"><i class="icon delete-icon fas fa-trash"></i>Delete</a>
 </body>
 </html>

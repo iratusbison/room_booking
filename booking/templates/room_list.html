@@ -1,24 +1,16 @@
-
-  <h2>Room List</h2>
-  
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        
-        <th>Available</th>
-        <th>Unavailable</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for room in rooms %}
-        <tr>
-          <td>{{ room.name }}</td>
-          
-          <td>{% if room.available %}Yes{% else %}No{% endif %}</td>
-          <td>{% if room.unavailable %}Yes{% else %}No{% endif %}</td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Room List</title>
+</head>
+<body>
+    <h1>Room List</h1>
+    <ul>
+        {% for room in rooms %}
+            <li>{{ room.name }} - {% if room.available %}Available{% else %}Not Available{% endif %}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

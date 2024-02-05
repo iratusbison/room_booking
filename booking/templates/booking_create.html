@@ -1,15 +1,39 @@
-<!-- booking_create.html -->
-<form method="post" action="{% url 'booking_create' %}">
-    {% csrf_token %}
-    {% for room in rooms %}
-      <input type="checkbox" name="rooms" value="{{ room.id }}"> {{ room.name }} - {{ room.description }}<br>
-    {% endfor %}
-    <label for="start_date">Start Date:</label>
-    <input type="date" name="start_date" required><br>
-    <label for="end_date">End Date:</label>
-    <input type="date" name="end_date" required><br>
-    <label for="price">Price:</label>
-    <input type="text" name="price" required><br>
-    <button type="submit">Book</button>
-  </form>
-  
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Booking</title>
+</head>
+<body>
+    <h1>Create Booking</h1>
+    <form method="POST" action="{% url 'booking_create' %}">
+        {% csrf_token %}
+        <label for="rooms">Select Rooms:</label><br>
+        <select name="rooms" id="rooms" multiple>
+            {% for room in rooms %}
+            <input type="checkbox" name="rooms" value="{{ room.id }}"> {{ room.name }} - {{ room.description }}<br>
+            {% endfor %}
+        </select><br><br>
+        <label for="name">Name:</label><br>
+        <input type="text" id="name" name="name"><br>
+        <label for="address">Address:</label><br>
+        <input type="text" id="address" name="address"><br>
+        <label for="phone">Phone:</label><br>
+        <input type="text" id="phone" name="phone"><br>
+        <label for="aadhar">Aadhar:</label><br>
+        <input type="text" id="aadhar" name="aadhar"><br>
+        <label for="email">Email:</label><br>
+        <input type="email" id="email" name="email"><br>
+        <label for="start_date">Start Date:</label><br>
+        <input type="date" id="start_date" name="start_date"><br>
+        <label for="end_date">End Date:</label><br>
+        <input type="date" id="end_date" name="end_date"><br>
+        <label for="price">Price:</label><br>
+        <input type="text" id="price" name="price"><br>
+       
+        
+        <input type="submit" value="Submit">
+    </form>
+</body>
+</html>
