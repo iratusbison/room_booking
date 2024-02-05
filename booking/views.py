@@ -6,14 +6,14 @@ from reportlab.pdfgen import canvas
 from io import BytesIO
 from .models import Room, Booking
 from django.http import HttpResponse
-from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.urls import reverse
 from django.shortcuts import redirect
 from django.utils.timezone import make_aware
-from reportlab.pdfgen import canvas
-from io import BytesIO
 from decimal import Decimal
+from django.db.models import Sum
+from datetime import datetime, timedelta
+
 
 def make_aware_with_time(value):
     # Assuming that time is 00:00:00 for start_date and 23:59:59 for end_date
@@ -46,12 +46,7 @@ def booking_create(request):
         rooms = Room.objects.all()
         return render(request, 'booking_create.html', {'rooms': rooms})
 
-from decimal import Decimal
 
-# views.py
-from django.db.models import Sum
-from django.utils.timezone import make_aware
-from datetime import datetime, timedelta
 
 def booking_list(request):
     # Check if a date range is provided in the request
