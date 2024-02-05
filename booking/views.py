@@ -24,6 +24,7 @@ def room_list(request):
     rooms = Room.objects.all()
     return render(request, 'room_list.html', {'rooms': rooms})
 
+
 def booking_create(request):
     if request.method == 'POST':
         room_ids = request.POST.getlist('rooms')
@@ -40,7 +41,8 @@ def booking_create(request):
         booking.gst = gst
         booking.save()
 
-        return render(request, 'booking_details.html', {'booking': booking})
+        # Redirect to the booking details page after creating the booking
+        return redirect('booking_detail', booking_id=booking.id)
 
     else:
         rooms = Room.objects.all()
