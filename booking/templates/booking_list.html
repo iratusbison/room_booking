@@ -1,0 +1,38 @@
+<!-- booking_list.html -->
+<form method="get" action="{% url 'booking_list' %}">
+    <label for="start_date">Start Date:</label>
+    <input type="date" id="start_date" name="start_date" value="{{ start_date|date:'Y-m-d' }}">
+    <label for="end_date">End Date:</label>
+    <input type="date" id="end_date" name="end_date" value="{{ end_date|date:'Y-m-d' }}">
+    <button type="submit">Apply Filter</button>
+</form>
+
+<p>Total Revenue: {{ total_revenue|default:"0.00" }}</p>
+
+
+
+    <h1>Booking List</h1>
+    <table border="1">
+        <tr>
+            <th>Booking ID</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+            <th>Price</th>
+            <th>GST</th>
+            <th>Rooms</th>
+            <th>Actions</th> <!-- Add a column for actions -->
+        </tr>
+        {% for booking_detail in bookings %}
+        <tr>
+            <td>{{ booking_detail.booking.id }}</td>
+            <td>{{ booking_detail.start_date }}</td>
+            <td>{{ booking_detail.end_date }}</td>
+            <td>{{ booking_detail.price }}</td>
+            <td>{{ booking_detail.gst }}</td>
+            <td>{{ booking_detail.rooms }}</td>
+            <td><a href="{% url 'booking_detail' booking_detail.booking.id %}">View Details</a></td> <!-- Add link to booking detail page -->
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

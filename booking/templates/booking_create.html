@@ -1,0 +1,15 @@
+<!-- booking_create.html -->
+<form method="post" action="{% url 'booking_create' %}">
+    {% csrf_token %}
+    {% for room in rooms %}
+      <input type="checkbox" name="rooms" value="{{ room.id }}"> {{ room.name }} - {{ room.description }}<br>
+    {% endfor %}
+    <label for="start_date">Start Date:</label>
+    <input type="date" name="start_date" required><br>
+    <label for="end_date">End Date:</label>
+    <input type="date" name="end_date" required><br>
+    <label for="price">Price:</label>
+    <input type="text" name="price" required><br>
+    <button type="submit">Book</button>
+  </form>
+  
