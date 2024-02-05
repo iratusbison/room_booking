@@ -65,6 +65,9 @@ def booking_create(request):
         if not update_room_availability(rooms, start_date, end_date):
             # Rollback the transaction if rooms are not available
             return HttpResponse("Selected rooms are not available for the specified dates.")
+        # Check if end_date is before start_date
+        if end_date < start_date:
+            return HttpResponse("End date cannot be before the start date.")
 
         booking = Booking.objects.create(
             start_date=start_date, 
@@ -170,16 +173,10 @@ def booking_list(request):
     start_date_str = request.GET.get('start_date', '')
     end_date_str = request.GET.get('end_date', '')
 
-    if end_date < start_date:
-        return HttpResponse("End date cannot be before the start date.")
-
-
     # Default to the last 30 days if no date range is provided
     if not start_date_str or not end_date_str:
         end_date = datetime.now()
         start_date = end_date - timedelta(days=30)
-    # Check if end_date is before start_date
-    
     else:
         start_date = make_aware(datetime.strptime(start_date_str, '%Y-%m-%d'))
         end_date = make_aware(datetime.strptime(end_date_str, '%Y-%m-%d'))
