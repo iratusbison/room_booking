@@ -104,8 +104,8 @@ def booking_create(request):
                     room.available = False
                     room.save()
 
-            # Calculate GST (18%)
-            gst = Decimal(price) * Decimal('0.18')
+            # Calculate GST (12%)
+            gst = Decimal(price) * Decimal('0.12')
             booking.gst = gst
             booking.save()
 
@@ -162,7 +162,7 @@ def booking_list(request):
     for booking in bookings:
         # Calculate GST for the booking
         price = float(booking.price)
-        gst = price * 0.18
+        gst = price * 0.12
 
         # Collect room details for the booking
         room_details = ", ".join([room.name for room in booking.rooms.all()])
@@ -197,7 +197,7 @@ def booking_detail(request, booking_id):
 
     # Calculate GST for the booking
     price = booking.price
-    gst = price * Decimal('0.18')
+    gst = price * Decimal('0.12')
     total_price = price + gst
 
     # Collect room details for the booking
@@ -260,9 +260,9 @@ def generate_pdf_bill(booking):
 
     # Calculate GST dynamically
     price = Decimal(booking.price)  # Convert to Decimal
-    gst = price * Decimal('0.18')  # Assuming GST is 18%
+    gst = price * Decimal('0.12')  # Assuming GST is 12%
     total_price = price + gst
-    p.drawString(80, 540, f"GST (18%): {gst} - Total: {total_price}")
+    p.drawString(80, 540, f"GST (12%): {gst} - Total: {total_price}")
 
     # Add booking details in a table
     booking_data = [
@@ -271,7 +271,7 @@ def generate_pdf_bill(booking):
         ['Start Date', booking.start_date.strftime('%Y-%m-%d')],
         ['End Date', booking.end_date.strftime('%Y-%m-%d')],
         ['Price', f"{booking.price}"],
-        ['GST (18%)', f"{gst}"],
+        ['GST (12%)', f"{gst}"],
         ['Total Price', f"{total_price}"],
         ['Name', booking.name],
         ['Address', booking.address],
