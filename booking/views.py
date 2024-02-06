@@ -345,3 +345,6 @@ def download_pdf(request, booking_id):
     response.write(pdf_buffer.read())
 
     return response
+
+
+

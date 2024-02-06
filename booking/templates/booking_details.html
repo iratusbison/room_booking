@@ -8,12 +8,18 @@
 <body>
     <h1>Booking Details</h1>
     <p><strong>Booking ID:</strong> {{ booking.id }}</p>
+    <p><strong>Rooms:</strong> {{ rooms }}</p>
+    <p><strong>Booking Name:</strong> {{ booking.name}}</p>
+    <p><strong>Aadhar:</strong> {{ booking.aadhar }}</p>
+    <p><strong>Phone:</strong> {{ booking.phone}}</p>
+    <p><strong>Address:</strong> {{ booking.address}}</p>
+    <p><strong>Email:</strong> {{ booking.email}}</p>
     <p><strong>Start Date:</strong> {{ start_date }}</p>
     <p><strong>End Date:</strong> {{ end_date }}</p>
     <p><strong>Price:</strong> {{ price }}</p>
     <p><strong>GST:</strong> {{ gst }}</p>
     <p><strong>Total Price</strong> {{ total_price }}</p>
-    <p><strong>Rooms:</strong> {{ rooms }}</p>
+    
 
     <!-- Download PDF Link -->
     <a href="{% url 'download_pdf' booking.id %}" target="_blank">Download PDF Bill</a>

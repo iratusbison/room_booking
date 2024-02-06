@@ -1,4 +1,13 @@
 <!-- booking_list.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking List</title>
+</head>
+<body>
+
 <form method="get" action="{% url 'booking_list' %}">
     <label for="start_date">Start Date:</label>
     <input type="date" id="start_date" name="start_date" value="{{ start_date|date:'Y-m-d' }}">
@@ -9,32 +18,73 @@
 
 <p>Total Revenue: {{ total_revenue|default:"0.00" }}</p>
 
+<h1>Booking List</h1>
+<table border="1" id="booking_table">
+    <tr>
+        <th>Booking ID</th>
+        <th>Start Date</th>
+        <th>End Date</th>
+        <th>Price</th>
+        <th>GST</th>
+        <th>Rooms</th>
+    </tr>
+    {% for booking_detail in bookings %}
+    <tr>
+        <td>{{ booking_detail.booking.id }}</td>
+        <td>{{ booking_detail.start_date }}</td>
+        <td>{{ booking_detail.end_date }}</td>
+        <td>{{ booking_detail.price }}</td>
+        <td>{{ booking_detail.gst }}</td>
+        {% if booking_detail.booking.id %}
+        <td><a href="{% url 'booking_detail' booking_detail.booking.id %}?rooms={{ booking_detail.rooms }}">{{ booking_detail.rooms }}</a></td>
+    {% else %}
+        <td>{{ booking_detail.rooms }}</td>
+    {% endif %}
 
 
-    <h1>Booking List</h1>
-    <table border="1">
-        <tr>
-            <th>Booking ID</th>
-            <th>Start Date</th>
-            <th>End Date</th>
-            <th>Price</th>
-            <th>GST</th>
-            <th>Rooms</th>
-            <th>Actions</th> <!-- Add a column for actions -->
-        </tr>
-        {% for booking_detail in bookings %}
-        <tr>
-            <td>{{ booking_detail.booking.id }}</td>
-            <td>{{ booking_detail.start_date }}</td>
-            <td>{{ booking_detail.end_date }}</td>
-            <td>{{ booking_detail.price }}</td>
-            <td>{{ booking_detail.gst }}</td>
-            <td>{{ booking_detail.rooms }}</td>
-            <td><a href="{% url 'booking_detail' booking_detail.booking.id %}">View Details</a></td> <!-- Add link to booking detail page -->
-        </tr>
-        {% endfor %}
-    </table>
-    
-    
+    </tr>
+    {% endfor %}
+</table>
+
+<button id="download_btn">Download Booking List</button>
+
+<script>
+    document.getElementById('download_btn').addEventListener('click', function() {
+        // Create CSV content
+        var csvContent = "data:text/csv;charset=utf-8,";
+        var rows = document.querySelectorAll("#booking_table tr");
+
+        // Initialize total revenue
+        var totalRevenue = 0;
+
+        rows.forEach(function(row, index) {
+            var rowData = [];
+            row.querySelectorAll("td").forEach(function(cell) {
+                // Append cell data to rowData array
+                rowData.push(cell.textContent);
+                // If it's the price column, update total revenue
+                if (index > 0 && cell.cellIndex === 3) {
+                    totalRevenue += parseFloat(cell.textContent) || 0;
+                }
+            });
+            csvContent += rowData.join(",") + "\n";
+        });
+
+        // Add total revenue row to the CSV content
+        csvContent += "Total Revenue:," + totalRevenue.toFixed(2) + "\n";
+
+        // Create a hidden link to initiate download
+        var encodedUri = encodeURI(csvContent);
+        var link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "booking_list.csv");
+        document.body.appendChild(link);
+
+        // Simulate clicking the link to start the download
+        link.click();
+    });
+</script>
+
+
 </body>
 </html>
