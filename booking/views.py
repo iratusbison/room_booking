@@ -1,31 +1,28 @@
 # views.py
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse
-from django.template.loader import render_to_string
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from io import BytesIO
 from .models import Room, Booking
 from django.http import HttpResponse
-from django.utils.html import strip_tags
-from django.urls import reverse
 from django.shortcuts import redirect
 from django.utils.timezone import make_aware
 from decimal import Decimal
 from django.db.models import Sum
 from datetime import datetime, timedelta
-from django.utils import timezone
 from django.db import transaction
 from reportlab.lib.pagesizes import letter
 from io import BytesIO
 from reportlab.pdfgen import canvas
 from decimal import Decimal
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.platypus import Table, TableStyle
 
 def make_aware_with_time(value):
     
     return make_aware(datetime.combine(value, datetime.min.time()))
-
-
 
 
 def update_room_availability(rooms, start_date, end_date):
@@ -98,74 +95,10 @@ def booking_create(request):
     else:
         rooms = Room.objects.filter(available=True)
         return render(request, 'booking_create.html', {'rooms': rooms})
-'''
-from django.core.exceptions import ValidationError
 
-@transaction.atomic
-def booking_create(request):
-    if request.method == 'POST':
-        room_ids = request.POST.getlist('rooms')
-        name = request.POST['name']
-        address = request.POST['address']
-        phone = request.POST['phone']
-        aadhar = request.POST['aadhar']
-        email = request.POST['email']
-        start_date_str = request.POST['start_date']
-        end_date_str = request.POST['end_date']
-        price = request.POST['price']
-
-        rooms = Room.objects.filter(pk__in=room_ids)
-
-        # Convert start_date and end_date strings to datetime.date objects
-        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
-        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
-
-       
-
-        # Check if end_date is before start_date
-        if end_date < start_date:
-            return HttpResponse("End date cannot be before the start date.")
-
-        # Check room availability and update status for the entire range
-        if not update_room_availability(rooms, start_date, end_date):
-            # Rollback the transaction if rooms are not available
-            return HttpResponse("Selected rooms are not available for the specified dates.")
-
-        booking = Booking.objects.create(
-            start_date=start_date, 
-            end_date=end_date, 
-            price=price, 
-            name=name, 
-            address=address, 
-            aadhar=aadhar, 
-            email=email, 
-            phone=phone
-        )
-        booking.rooms.set(rooms)
-
-        # Mark rooms as unavailable for the entire range
-        for room in rooms:
-            room.available = False
-            room.save()
-
-        # Calculate GST (18%)
-        gst = Decimal(price) * Decimal('0.18')
-        booking.gst = gst
-        booking.save()
-
-        # Redirect to the booking details page after creating the booking
-        return redirect('booking_detail', booking_id=booking.id)
-
-    else:
-        rooms = Room.objects.filter(available=True)
-        return render(request, 'booking_create.html', {'rooms': rooms})
-'''
 def room_list(request):
     rooms = Room.objects.all()
     return render(request, 'room_list.html', {'rooms': rooms})
-
-
-
 
 
 def booking_list(request):
@@ -282,25 +215,11 @@ def generate_pdf_bill(booking):
 
     p = canvas.Canvas(buffer, pagesize=letter)
 
-    # Add SV Mahal and contact details
-    p.setFont("Helvetica-Bold", 12)
+    # Customize SV Mahal and contact details design
+   # p.setFont("Helvetica-Bold", 12)
     p.drawString(50, 750, "SV Mahal")
-    p.drawString(50, 735, "123 Street, City, Country")
-    p.drawString(50, 720, "Phone: +1234567890")
-    p.drawString(70, 650, "Booking Bill")
-    # Add a line under the SV Mahal details
-    p.line(50, 710, 550, 710)
-    p.line(70, 645, 300, 645)
-
-
-    
-    
-
-    # Add content to the PDF
-    p.drawString(80, 620, f"Booking ID: {booking.id}")
-    p.drawString(80, 600, f"Start Date: {booking.start_date.strftime('%Y-%m-%d')}")
-    p.drawString(80, 580, f"End Date: {booking.end_date.strftime('%Y-%m-%d')}")
-    p.drawString(80, 560, f"Price: {booking.price}")
+    p.drawString(50, 735, "456 Main Street, Cityville, Countryland")
+    p.drawString(50, 720, "Phone: +9876543210")
 
     # Calculate GST dynamically
     price = Decimal(booking.price)  # Convert to Decimal
@@ -308,22 +227,34 @@ def generate_pdf_bill(booking):
     total_price = price + gst
     p.drawString(80, 540, f"GST (18%): {gst} - Total: {total_price}")
 
-    # Add room details
-    y_position = 520
-    room_details = ', '.join([room.name for room in booking.rooms.all()])
+    # Add booking details in a table
+    booking_data = [
+     
+        ['Booking ID', booking.id],
+        ['Start Date', booking.start_date.strftime('%Y-%m-%d')],
+        ['End Date', booking.end_date.strftime('%Y-%m-%d')],
+        ['Price', f"{booking.price}"],
+        ['GST (18%)', f"{gst}"],
+        ['Total Price', f"{total_price}"],
+        ['Name', booking.name],
+        ['Address', booking.address],
+        ['Aadhar', booking.aadhar],
+        ['Phone', booking.phone],
+        ['Email', booking.email],
+    ]
 
-    p.drawString(80, y_position, "Room Details:")
-    p.setFont("Courier", 10)
-    text_object = p.beginText(80, y_position - 20)
-    text_object.textLines(room_details)
-    p.drawText(text_object)
+    booking_table = Table(booking_data, colWidths=[200, 200])
+    booking_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+    ]))
 
-    # Add a border around the content
-    p.rect(50, y_position - 40, 540, 200)
-
-    # Add Murugan photo
-    murugan_photo_path = "murugan.jpg"  # Path to your Murugan photo
-    p.drawImage(murugan_photo_path, 350, 500, width=150, height=150)
+    booking_table.wrapOn(p, 400, 300)
+    booking_table.drawOn(p, 80, 400)
 
     # Close the PDF object cleanly, and we're done.
     p.showPage()
@@ -332,9 +263,6 @@ def generate_pdf_bill(booking):
     # File is done, rewind the buffer.
     buffer.seek(0)
     return buffer
-
-
-
 
 def download_pdf(request, booking_id):
     booking = get_object_or_404(Booking, pk=booking_id)

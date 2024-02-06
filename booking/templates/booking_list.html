@@ -19,6 +19,14 @@
 <p>Total Revenue: {{ total_revenue|default:"0.00" }}</p>
 
 <h1>Booking List</h1>
+
+<!-- Search Form -->
+<form id="search_form">
+    <label for="search_booking_id">Search Booking ID:</label>
+    <input type="text" id="search_booking_id" name="search_booking_id">
+    <button type="button" id="search_button">Search</button>
+</form>
+
 <table border="1" id="booking_table">
     <tr>
         <th>Booking ID</th>
@@ -40,8 +48,6 @@
     {% else %}
         <td>{{ booking_detail.rooms }}</td>
     {% endif %}
-
-
     </tr>
     {% endfor %}
 </table>
@@ -83,6 +89,23 @@
         // Simulate clicking the link to start the download
         link.click();
     });
+
+    // Search Functionality
+    document.getElementById('search_button').addEventListener('click', function() {
+    var searchValue = document.getElementById('search_booking_id').value.trim().toLowerCase();
+    var rows = document.querySelectorAll("#booking_table tr");
+
+    rows.forEach(function(row, index) {
+        if (index > 0) { // Skip the header row
+            var bookingID = row.querySelector("td:first-child").textContent.trim().toLowerCase();
+            if (bookingID === searchValue) {
+                row.style.display = ""; // Show the row
+            } else {
+                row.style.display = "none"; // Hide the row
+            }
+        }
+    });
+});
 </script>
 
 
