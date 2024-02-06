@@ -58,62 +58,84 @@ def update_room_availability(rooms, start_date, end_date):
     except:
         return False
 
+
+from django.http import HttpResponseServerError
+
 @transaction.atomic
 def booking_create(request):
     if request.method == 'POST':
-        room_ids = request.POST.getlist('rooms')
-        name = request.POST['name']
-        address = request.POST['address']
-        phone = request.POST['phone']
-        aadhar = request.POST['aadhar']
-        email = request.POST['email']
-        start_date = request.POST['start_date']
-        end_date = request.POST['end_date']
-        price = request.POST['price']
+        try:
+            room_ids = request.POST.getlist('rooms')
+            name = request.POST['name']
+            address = request.POST['address']
+            phone = request.POST['phone']
+            aadhar = request.POST['aadhar']
+            email = request.POST['email']
+            start_date = request.POST['start_date']
+            end_date = request.POST['end_date']
+            price = request.POST['price']
 
-        rooms = Room.objects.filter(pk__in=room_ids)
+            rooms = Room.objects.filter(pk__in=room_ids)
 
-        # Check room availability and update status
-        if not update_room_availability(rooms, start_date, end_date):
-            # Rollback the transaction if rooms are not available
-            return HttpResponse("Selected rooms are not available for the specified dates.")
-        # Check if end_date is before start_date
-        if end_date < start_date:
-            return HttpResponse("End date cannot be before the start date.")
+            # Check room availability and update status
+            if not update_room_availability(rooms, start_date, end_date):
+                # Rollback the transaction if rooms are not available
+                return HttpResponse("Selected rooms are not available for the specified dates.")
 
-        booking = Booking.objects.create(
-            start_date=start_date, 
-            end_date=end_date, 
-            price=price, 
-            name=name, 
-            address=address, 
-            aadhar=aadhar, 
-            email=email, 
-            phone=phone
-        )
-        booking.rooms.set(rooms)
+            # Check if end_date is before start_date
+            if end_date < start_date:
+                return HttpResponse("End date cannot be before the start date.")
 
-        # Mark rooms as unavailable only if the start date is in the future
-        if datetime.strptime(start_date, '%Y-%m-%d').date() > datetime.now().date():
-            for room in rooms:
-                room.available = False
-                room.save()
+            booking = Booking.objects.create(
+                start_date=start_date, 
+                end_date=end_date, 
+                price=price, 
+                name=name, 
+                address=address, 
+                aadhar=aadhar, 
+                email=email, 
+                phone=phone
+            )
+            booking.rooms.set(rooms)
 
-        # Calculate GST (18%)
-        gst = Decimal(price) * Decimal('0.18')
-        booking.gst = gst
-        booking.save()
+            # Mark rooms as unavailable only if the start date is in the future
+            if datetime.strptime(start_date, '%Y-%m-%d').date() > datetime.now().date():
+                for room in rooms:
+                    room.available = False
+                    room.save()
 
-        # Redirect to the booking details page after creating the booking
-        return redirect('booking_detail', booking_id=booking.id)
+            # Calculate GST (18%)
+            gst = Decimal(price) * Decimal('0.18')
+            booking.gst = gst
+            booking.save()
+
+            # Redirect to the booking details page after creating the booking
+            return redirect('booking_detail', booking_id=booking.id)
+
+        except Exception as e:
+            # Print or log the exception for debugging purposes
+            print(f"An error occurred: {e}")
+            return HttpResponseServerError("An error occurred while processing the booking.")
 
     else:
         rooms = Room.objects.filter(available=True)
         return render(request, 'booking_create.html', {'rooms': rooms})
 
+
 def room_list(request):
     rooms = Room.objects.all()
-    return render(request, 'room_list.html', {'rooms': rooms})
+    now = datetime.now()
+
+    for room in rooms:
+        bookings = Booking.objects.filter(rooms=room, end_date__gte=now)
+        if bookings.exists():
+            room.is_available = False
+            room.booking = bookings.first()
+        else:
+            room.is_available = True
+            room.booking = None
+
+    return render(request, 'room_list.html', {'rooms': rooms, 'now': now})
 
 
 def booking_list(request):

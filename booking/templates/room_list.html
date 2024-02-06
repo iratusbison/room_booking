@@ -1,3 +1,5 @@
+<!-- room_list.html -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,11 +9,43 @@
 </head>
 <body>
     <h1>Room List</h1>
-    <ul>
-        {% for room in rooms %}
-            <li>{{ room.name }} - {% if room.available %}Available{% else %}Not Available{% endif %}</li><a href="{% url 'delete_room' room.id %}">Delete</a></li>
-        {% endfor %}
-    </ul>
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                
+                <th>Description</th>
+                <th>Availability</th>
+                <th>Booking</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for room in rooms %}
+            <tr>
+                <td>{{ room.name }}</td>
+                
+                <td>{{ room.description }}</td>
+                <td>{% if room.is_available %} Available {% else %} Not Available {% endif %}</td>
+                <td>
+                    {% if room.booking %}
+                        Booking ID: {{ room.booking.id }} <br>
+                        Start Date: {{ room.booking.start_date }} <br>
+                        End Date: {{ room.booking.end_date }}
+                    {% else %}
+                        No Booking
+                    {% endif %}
+                </td>
+                <td><a href="{% url 'delete_room' room.id %}">Delete</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
+
+
+
     <li><a href="{% url 'add_room' %}">add</a></li>
     <li><a href = "{% url 'booking_create' %}">book</a></li>
     <li><a href = "{% url 'booking_list' %}">booked list</a></li>
