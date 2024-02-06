@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Room</title>
+</head>
+<body>
+    <h1>Add Room</h1>
+    <form method="POST">
+        {% csrf_token %}
+        <label for="name">Name:</label><br>
+        <input type="text" id="name" name="name"><br>
+        <label for="description">Description:</label><br>
+        <textarea id="description" name="description"></textarea><br>
+        <label for="available">Available:</label>
+        <input type="checkbox" id="available" name="available"><br>
+        <label for="unavailable">Unavailable:</label>
+        <input type="checkbox" id="unavailable" name="unavailable"><br>
+        <input type="submit" value="Add Room">
+    </form>
+
+    <h2>Rooms</h2>
+    <ul>
+        {% for room in rooms %}
+        <li>{{ room.name }} - <a href="{% url 'delete_room' room.id %}">Delete</a></li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

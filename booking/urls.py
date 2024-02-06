@@ -1,9 +1,11 @@
 
 # urls.py
 from django.urls import path
-from .views import room_list, booking_create, booking_list, booking_detail, download_pdf, edit_booking, delete_booking
+from .views import room_list, booking_create, booking_list, booking_detail, download_pdf, edit_booking, delete_booking, add_room, delete_room
 
 urlpatterns = [
+    path('add_room/', add_room, name='add_room'),
+    path('delete_room/<int:room_id>/', delete_room, name='delete_room'),
     path('', room_list, name='room_list'),
     path('booking/create/', booking_create, name='booking_create'),
     path('edit-booking/<int:booking_id>/', edit_booking, name='edit_booking'),

@@ -25,6 +25,21 @@ def make_aware_with_time(value):
     return make_aware(datetime.combine(value, datetime.min.time()))
 
 
+def add_room(request):
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        description = request.POST.get('description')
+        available = request.POST.get('available') == 'on'  # Convert 'on' string to True
+        unavailable = request.POST.get('unavailable') == 'on'  # Convert 'on' string to True
+        room = Room.objects.create(name=name, description=description, available=available, unavailable=unavailable)
+        return redirect('room_list')  # Redirect to the room list page after adding a room
+    return render(request, 'add_room.html')
+
+def delete_room(request, room_id):
+    room = Room.objects.get(id=room_id)
+    room.delete()
+    return redirect('room_list')
+
 def update_room_availability(rooms, start_date, end_date):
     try:
         with transaction.atomic():

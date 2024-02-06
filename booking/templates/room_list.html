@@ -9,8 +9,11 @@
     <h1>Room List</h1>
     <ul>
         {% for room in rooms %}
-            <li>{{ room.name }} - {% if room.available %}Available{% else %}Not Available{% endif %}</li>
+            <li>{{ room.name }} - {% if room.available %}Available{% else %}Not Available{% endif %}</li><a href="{% url 'delete_room' room.id %}">Delete</a></li>
         {% endfor %}
     </ul>
+    <li><a href="{% url 'add_room' %}">add</a></li>
+    <li><a href = "{% url 'booking_create' %}">book</a></li>
+    <li><a href = "{% url 'booking_list' %}">booked list</a></li>
 </body>
 </html>
